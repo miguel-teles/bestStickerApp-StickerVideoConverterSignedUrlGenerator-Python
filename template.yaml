@@ -24,6 +24,9 @@ Resources:
       Architectures:
       - x86_64
       AutoPublishAlias: dev
+      Environment:
+        Variables:
+          BUCKET_NAME: beststickerapp-videoconverter
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
