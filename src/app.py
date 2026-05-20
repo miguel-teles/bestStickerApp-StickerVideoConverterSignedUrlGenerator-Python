@@ -15,16 +15,16 @@ def lambda_handler(event, context):
 
     # Adiciona isso se for rodar localmente
     #
-    s3 = boto3.client(
-        "s3",
-        endpoint_url="http://localhost:4566",
-        aws_access_key_id="test",
-        aws_secret_access_key="test",
-        region_name="us-east-1"
-    )
     # s3 = boto3.client(
-    #     "s3"
+    #     "s3",
+    #     endpoint_url="http://localhost:4566",
+    #     aws_access_key_id="test",
+    #     aws_secret_access_key="test",
+    #     region_name="us-east-1"
     # )
+    s3 = boto3.client(
+        "s3"
+    )
 
     signed_url = s3.generate_presigned_url(
         'put_object',
