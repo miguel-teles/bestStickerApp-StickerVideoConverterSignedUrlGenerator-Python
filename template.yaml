@@ -27,6 +27,7 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: beststickerapp-videoconverter
+          EXPIRATION_DURATION_SIGNED_URL: 30
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
