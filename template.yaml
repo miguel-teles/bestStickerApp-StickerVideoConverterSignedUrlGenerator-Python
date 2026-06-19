@@ -26,8 +26,16 @@ Resources:
       AutoPublishAlias: dev
       Environment:
         Variables:
-          BUCKET_NAME: beststickerapp-videoconverter
+          BUCKET_NAME: beststickerapp-videoconvertion-in
           EXPIRATION_DURATION_SIGNED_URL: 30
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource:
+                - arn:aws:s3:::beststickerapp-videoconvertion-in/*
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
