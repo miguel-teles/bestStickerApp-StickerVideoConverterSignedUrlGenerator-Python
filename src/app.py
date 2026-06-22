@@ -3,15 +3,25 @@ import os
 
 import boto3
 
-BUCKET_NAME = os.environ["BUCKET_NAME"]
-EXPIRATION_DURATION_SIGNED_URL = os.environ["EXPIRATION_DURATION_SIGNED_URL"]
+INPUT_BUCKET_NAME = os.environ["INPUT_BUCKET_NAME"]
+OUTPUT_BUCKET_NAME = os.environ["OUTPUT_BUCKET_NAME"]
+EXPIRATION_DURATION_SIGNED_URL_UPLOAD = os.environ["EXPIRATION_DURATION_SIGNED_URL"]
+EXPIRATION_DURATION_SIGNED_URL_DOWNLOAD = os.environ["EXPIRATION_DURATION_SIGNED_URL"]
 
 def lambda_handler(event, context):
     body = event.get('body')
     if body is None:
         raise ValueError("Request body is required")
 
-    key = json.loads(body).get("fileName")
+    json_content = json.loads(body)
+
+    filename = json_content.get("fileName")
+    if filename is None:
+        raise ValueError("filename is required")
+
+    operation = json_content.get('operation')
+    if operation is None:
+        raise ValueError("operation is required")
 
     # Adiciona isso se for rodar localmente
     #
@@ -26,16 +36,30 @@ def lambda_handler(event, context):
         "s3"
     )
 
+    out_filename = None
+    if operation == "download":
+        bucket_operation = 'get_object'
+        bucket_name = OUTPUT_BUCKET_NAME
+        expiration_duration = EXPIRATION_DURATION_SIGNED_URL_DOWNLOAD
+    elif operation == "upload":
+        bucket_operation = 'put_object'
+        bucket_name = INPUT_BUCKET_NAME
+        out_filename = "out" + filename
+        out_filename = out_filename.split(".")[0] + ".webp"
+        expiration_duration = EXPIRATION_DURATION_SIGNED_URL_UPLOAD
+    else:
+        raise ValueError("Invalid operation")
+
     signed_url = s3.generate_presigned_url(
-        'put_object',
-        Params={'Bucket': BUCKET_NAME, 'Key': key},
-        ExpiresIn=EXPIRATION_DURATION_SIGNED_URL
+        bucket_operation,
+        Params={'Bucket': bucket_name, 'Key': filename},
+        ExpiresIn=expiration_duration
     )
 
     return {
         "statusCode": 200,
         "body": json.dumps({
             "signedUrl": signed_url,
-            "convertedFileName": "out"+key
+            "convertedFileName": out_filename
         }),
     }

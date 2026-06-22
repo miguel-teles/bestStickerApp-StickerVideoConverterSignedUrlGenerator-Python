@@ -4,19 +4,17 @@ import pytest
 import uuid
 import os
 
-os.environ["BUCKET_NAME"] = 'BUCKET_TEST'
+os.environ["INPUT_BUCKET_NAME"]= 'INPUT_BUCKET_TEST'
+os.environ["OUTPUT_BUCKET_NAME"]= 'OUTPUT_BUCKET_TEST'
 os.environ["EXPIRATION_DURATION_SIGNED_URL"] = str(3600)
 
 from src import app
 
-
-@pytest.fixture()
-def apigw_event():
-    """ Generates API GW Event"""
-    file_name = uuid.uuid4()
+def build_body(file_name, operation):
+    upload_body = json.dumps({"fileName": str(file_name), "operation": operation})
 
     return {
-        "body": '{ "fileName": "' + str(file_name) +  '" }',
+        "body": upload_body,
         "resource": "/{proxy+}",
         "requestContext": {
             "resourceId": "123456",
@@ -68,11 +66,50 @@ def apigw_event():
     }
 
 
-def test_lambda_handler(apigw_event):
+@pytest.fixture()
+def upload_body_test():
+    return build_body(uuid.uuid4(), "upload")
 
-    ret = app.lambda_handler(apigw_event, "")
+@pytest.fixture()
+def download_body_test():
+    return build_body(uuid.uuid4(), "download")
+
+@pytest.fixture()
+def invalid_operation_body_test():
+    return build_body(uuid.uuid4(), "invalid")
+
+@pytest.fixture()
+def null_operation_body_test():
+    return build_body(uuid.uuid4(), None)
+
+
+def test_upload_url(upload_body_test):
+    ret = app.lambda_handler(upload_body_test, "")
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200
     assert "signedUrl" in ret["body"]
-    assert "http://localhost:4566/BUCKET_TEST/" in data["signedUrl"]
+    assert "http://localhost:4566/INPUT_BUCKET_TEST/" in data["signedUrl"]
+    assert "convertedFileName" in ret["body"]
+    assert "out" in data.get("convertedFileName")
+    assert ".webp" in data.get("convertedFileName")
+
+def test_download_url(download_body_test):
+    ret = app.lambda_handler(download_body_test, "")
+    data = json.loads(ret["body"])
+
+    assert ret["statusCode"] == 200
+    assert "signedUrl" in ret["body"]
+    assert "http://localhost:4566/OUTPUT_BUCKET_TEST/" in data["signedUrl"]
+
+def test_invalid_operation(invalid_operation_body_test):
+    try:
+        app.lambda_handler(invalid_operation_body_test, "")
+    except ValueError as e:
+        assert str(e) == "Invalid operation"
+
+def test_null_operation(null_operation_body_test):
+    try:
+        app.lambda_handler(null_operation_body_test, "")
+    except ValueError as e:
+        assert str(e) == "operation is required"
