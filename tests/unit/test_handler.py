@@ -6,7 +6,8 @@ import os
 
 os.environ["INPUT_BUCKET_NAME"]= 'INPUT_BUCKET_TEST'
 os.environ["OUTPUT_BUCKET_NAME"]= 'OUTPUT_BUCKET_TEST'
-os.environ["EXPIRATION_DURATION_SIGNED_URL"] = str(3600)
+os.environ["EXPIRATION_DURATION_SIGNED_URL_DOWNLOAD"] = str(3600)
+os.environ["EXPIRATION_DURATION_SIGNED_URL_UPLOAD"] = str(3600)
 
 from src import app
 
